@@ -14,6 +14,8 @@ class LeaderboardPage extends StatelessWidget {
     'Jack'
   ];
 
+  LeaderboardPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
