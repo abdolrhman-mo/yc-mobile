@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/utils/validators.dart';
 import 'package:flutter_application_2/screens/home_page.dart';
+import 'package:flutter_application_2/screens/auth/login_page.dart';
+import 'package:flutter_application_2/services/auth_service.dart';
+import 'package:flutter_application_2/widgets/form_field_widget.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:intl/intl.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -10,206 +13,111 @@ class SignUpPage extends StatefulWidget {
   State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateMixin {
-  final nameController = TextEditingController();
-  final dobController = TextEditingController();
-  final emailController = TextEditingController();
+class _SignUpPageState extends State<SignUpPage> {
+  final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   final formKey = GlobalKey<FormState>();
-
-  late AnimationController buttonController;
-  late Animation<double> buttonScale;
-
-  @override
-  void initState() {
-    super.initState();
-    buttonController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-    buttonScale = Tween<double>(begin: 1.0, end: 1.1).animate(buttonController);
-  }
+  final authService = AuthService();
 
   void showError(String message) {
     Fluttertoast.showToast(
       msg: message,
       toastLength: Toast.LENGTH_LONG,
       gravity: ToastGravity.TOP,
-      timeInSecForIosWeb: 8,
       backgroundColor: Colors.red,
       textColor: Colors.white,
       fontSize: 16.0,
     );
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (selectedDate != null && selectedDate != DateTime.now()) {
-      setState(() {
-        dobController.text = '${selectedDate.toLocal()}'.split(' ')[0];
-      });
-    }
-  }
+  Future<void> handleSignUp() async {
+    if (formKey.currentState!.validate()) {
+      final username = usernameController.text;
+      final password = passwordController.text;
 
-  bool isOlderThanTenYears(String dob) {
-    final selectedDate = DateFormat('yyyy-MM-dd').parse(dob);
-    final today = DateTime.now();
-    final difference = today.difference(selectedDate).inDays;
-    return difference > 3652; // 10 years = 3652 days
+      final success = await authService.signUp(username, password);
+      if (success) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomePage(),
+          ),
+        );
+      } else {
+        showError('Failed to sign up. Please try again.');
+      }
+    } else {
+      showError("Please fill all required fields.");
+    }
   }
 
   @override
   void dispose() {
-    nameController.dispose();
-    dobController.dispose();
-    emailController.dispose();
+    usernameController.dispose();
     passwordController.dispose();
-    buttonController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF2B5876), Color(0xFF4E4376)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
+      appBar: AppBar(
+        title: const Text('Sign Up'),
+        automaticallyImplyLeading: false,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Center(
+          child: SingleChildScrollView(
             child: Form(
               key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Sign Up',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Study Steady',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 40),
-                    TextFormField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white70,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Name cannot be empty';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: dobController,
-                      decoration: InputDecoration(
-                        labelText: 'Date of Birth',
-                        hintText: 'Pick your birth date',
-                        border: const OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white70,
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.calendar_today),
-                          onPressed: () => _selectDate(context),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  FormFieldWidget(
+                    controller: usernameController,
+                    labelText: 'Username',
+                    prefixIcon: Icons.person,
+                    validator: (value) =>
+                        Validators.validateNonEmpty(value, 'Username'),
+                  ),
+                  const SizedBox(height: 20),
+                  FormFieldWidget(
+                    controller: passwordController,
+                    labelText: 'Password',
+                    prefixIcon: Icons.lock,
+                    obscureText: true,
+                    validator: (value) =>
+                        Validators.validateNonEmpty(value, 'Password'),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: handleSignUp,
+                    child: const Text('Sign Up'),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
                         ),
-                      ),
-                      readOnly: true,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Date of Birth cannot be empty';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white70,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Email cannot be empty';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white70,
-                      ),
-                      obscureText: true,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Password cannot be empty';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    AnimatedBuilder(
-                      animation: buttonController,
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: buttonScale.value,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              buttonController.forward().then((_) => buttonController.reverse());
-                              if (formKey.currentState!.validate()) {
-                                if (!isOlderThanTenYears(dobController.text)) {
-                                  showError("You should be older than 10 years old.");
-                                  return;
-                                }
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const HomePage(),
-                                  ),
-                                );
-                              } else {
-                                showError("Please fill all required fields.");
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 15),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: const Text('Sign Up'),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                      );
+                    },
+                    child: const Text('Already have an account? Log in'),
+                  ),
+                ],
               ),
             ),
           ),

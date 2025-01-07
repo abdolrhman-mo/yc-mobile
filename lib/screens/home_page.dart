@@ -22,18 +22,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Momentom'),
-        backgroundColor: const Color(0xFF2B5876), // Matching the gradient color
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.timer), text: 'Timer'),
-            Tab(icon: Icon(Icons.leaderboard), text: 'Leaderboard'),
-            Tab(icon: Icon(Icons.person), text: 'Profile'),
-          ],
-        ),
-      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -44,12 +32,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
         child: TabBarView(
           controller: _tabController,
-            children: [
+          children: [
             TimerPage(),
             LeaderboardPage(),
             ProfilePage(),
-            ],
+          ],
         ),
+      ),
+      bottomNavigationBar: TabBar(
+        controller: _tabController,
+        tabs: const [
+          Tab(icon: Icon(Icons.timer), text: 'Timer'),
+          Tab(icon: Icon(Icons.leaderboard), text: 'Leaderboard'),
+          Tab(icon: Icon(Icons.person), text: 'Profile'),
+        ],
+        labelColor: Colors.black,
+        unselectedLabelColor: const Color.fromARGB(255, 62, 62, 62),
+        indicatorColor: Colors.transparent,
       ),
     );
   }
